@@ -1,0 +1,86 @@
+"use client"
+import { useEffect, useState } from "react";
+
+export default function Home() {
+  const [token, setToken] = useState('');
+  const [data, setData] = useState('');
+
+  useEffect(() => {
+    const handleToken = (e) => {
+      setToken(e.credential);
+    };
+
+    const loadGoogleSignIn = async () => {
+      try {
+        await new Promise((resolve, reject) => {
+          window.onload = resolve;
+        });
+
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.onload = () => {
+          google.account.id.initialize({
+            client_id: '',
+            callback: handleToken,
+          });
+          google.account.id.prompt();
+          const rootElement = document.getElementById('root');
+          if (rootElement) {
+            google.account.id.renderButton(rootElement, {
+              theme: 'outline',
+              size: 'large',
+              click_listener: onClickHandler
+            });
+          } else {
+            console.error("Root element not found.");
+          }
+        };
+        document.body.appendChild(script);
+      } catch (error) {
+        console.error('Error loading Google SignIn script:', error);
+      }
+    };
+
+    loadGoogleSignIn();
+
+  }, []);
+
+  const getData = async (token) => {
+    try {
+      const apiRes = await fetch('dfghjkl', {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          token: token
+        })
+      });
+
+      const res = await apiRes.json();
+      if (res.error) {
+        console.error('Error', res.error);
+      } else {
+        setData(res);
+        console.log("response --> ", res);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  function onClickHandler() {
+    console.log("Sign-in button clicked");
+  }
+
+  return (
+    <>
+      <div id="root"></div>
+      <button onClick={() => getData(token)}>Get Info</button>
+      {data && (
+        <p>{data}</p>
+      )}
+    </>
+  );
+}
